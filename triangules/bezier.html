@@ -1,0 +1,137 @@
+<html>
+
+<head>
+    <style type="text/css">
+        canvas {
+            border: 1px solid black;
+                }
+    </style>
+</head>
+
+<body>
+    <canvas width="500" height="250" id="canvas"></canvas>
+    <script>
+var conf = {
+  fx: -0.5,
+  fy: 0.01,
+  sx: 0.5,
+  sy: 0.01,
+  fhx: -0.5,
+  fhy: -0.5,
+  shx: 0.5,
+  shy: -0.5
+}
+
+
+
+var calcWidth = canvas.width/2;
+var calcHeight = canvas.heigth / 2;
+
+ function getCalc(param, calc){
+     var h = calc / 2;
+      return (conf[param] * h) + h;
+ }
+
+ function draw() {
+    
+        var x,y,lx,ly;
+
+        var ctx = canvas.getContext("2d");
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.beginPath();
+            ctx.arc( 
+                conf.f_x=getCalc('fx', canvas.width) , 
+                conf.f_y=getCalc('fy', canvas.height) , 2,0, 
+                Math.PI*2,true); 
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc( 
+                conf.f_hx=getCalc('fhx', canvas.width) , 
+                conf.f_hy=getCalc('fhy', canvas.height) , 4,0, 
+                Math.PI*2,true); 
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(conf.f_x,conf.f_y);
+            ctx.lineTo(conf.f_hx, conf.f_hy);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc( 
+                conf.s_x=getCalc('sx', canvas.width) , 
+                conf.s_y=getCalc('sy', canvas.height) , 2,0, 
+                Math.PI*2,true); 
+            ctx.fill();
+
+                ctx.beginPath();
+            ctx.arc( 
+                conf.s_hx=getCalc('shx', canvas.width) , 
+                conf.s_hy=getCalc('shy', canvas.height) , 4,0, 
+                Math.PI*2,true); 
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(conf.s_x,conf.s_y);
+            ctx.lineTo(conf.s_hx, conf.s_hy);   
+            ctx.stroke();
+
+
+            for(var x=0;x<1;x+=.01){
+                var v1x = (conf.f_hx - conf.f_x)*x + conf.f_x,
+                    v1y = (conf.f_hy - conf.f_y)*x + conf.f_y,
+
+                    v3x = (conf.s_x - conf.s_hx)*x + conf.s_hx,
+                    v3y = (conf.s_y - conf.s_hy)*x + conf.s_hy,
+
+                    bx = (v3x - v1x)*x + v1x,
+                    by = (v3y - v1y)*x + v1y;
+
+                ctx.beginPath();
+            ctx.arc( 
+                bx , 
+                by , 1,0, 
+                Math.PI*2,true); 
+            ctx.fill();
+
+            }
+    
+            requestAnimationFrame(draw);
+
+    }
+
+
+      requestAnimationFrame(draw);
+
+
+      canvas.addEventListener('mousemove', function(ev){
+
+          for(item of [['f_x','f_y'],['f_hx','f_hy'],['s_x','s_y'],['s_hx','s_hy']]){
+              
+            if( Math.sqrt(Math.pow(conf[item[0]]-ev.x,2) + Math.pow(conf[item[1]]-ev.y,2)) < 15 ){
+
+                canvas.style.cursor='move';
+
+                if(ev.buttons===1){
+
+                    var calcw = canvas.width / 2, calcy = canvas.height / 2;
+                    
+                    conf[item[0].replace('_','')] = (ev.x-calcw)/calcw;
+                    conf[item[1].replace('_','')] = (ev.y-calcy)/calcy;
+                    
+                }
+            } else { 
+                 canvas.style.cursor='default';
+            }            
+          }  
+
+
+
+
+         ev.stopPropagation();
+      });   
+
+        </script>
+</body>
+
+</html>

@@ -1,11 +1,10 @@
 open System
 
-let cofactor (i:float) subM =
-  (-1. ** (i+2.)) * laplace subM
-
 let rec laplace (matrix:float[,]) =
   //how can I avoid this mutable?
   let mutable acumulator = 0.
+  let cofactor (i:float) subM =
+    (-1. ** (i+2.)) * laplace subM
   let determine (m:float[,]) =
     m.[0,0] * m.[1,1] - m.[0,1] * m.[1,0]
   if Array2D.length1 matrix<=2 then
@@ -20,12 +19,12 @@ let rec laplace (matrix:float[,]) =
     acumulator
 
 
-let teste = array2D [
+let teste = 
+  array2D [ 
     [ 2.; 3.; 5.; 6. ]
     [ 4.; 2.; 1.; 1. ]
     [ 5.; 1.; 2.; 3. ]
-    [ 6.; 1.; 3.; 2. ]
-]
+    [ 6.; 1.; 3.; 2. ]]
 
 //let teste = array2D [
 //    [ 3.;5.;6.]
