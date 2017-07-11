@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        svg {
+            background-color: white;
+            width: 640px;
+            height: 480px;
+        }
+    </style>
+</head>
+
+<body>
+    <svg viewPort="0 0 640 480" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    </svg>
+    <script>
+
+        function Direction(deg){
+            var angle = 90, {sin,cos, PI} = Math, rad = (PI*2)/360, cache=[];
+            if(deg)angle=deg;
+            function left(){
+               if(--angle<0)angle=360;
+            }
+            function right(){
+                if(++angle>360)angle=0;
+            }
+
+            function getAngle(){
+                return angle;
+            }
+           
+            function value(){
+                
+                if(cache[angle])return cache[angle];
+                
+                let _rad = angle*rad,
+                    _cos = cos(_rad), 
+                    _sin= sin(_rad);
+
+                return cache[angle] = {
+                    x: _cos - _sin,
+                    y: _sin + _cos
+                }
+            }
+
+
+            this.left = left;
+            this.right = right;
+            this.value = value;
+            this.angle = getAngle;
+        }
+
+        function Camera(player, fov, resolution){
+            
+            var direction = new Direction(player.direction.angle()+90), cache=[], raysCache=[];            
+
+            const lx  = (fov)=> -(player.direction.value().x*fov)+player.x,
+                ly  =   (fov)=> -(player.direction.value().y*fov)+player.y,
+                x1  = (f1, f2)=> -(direction.value().x*(f1))+lx(f2||f1),
+                y1  = (f1, f2)=> -(direction.value().y*(f1))+ly(f2||f1),
+                x2  = (f1,f2)=> 2*lx(f2||f1)-x1(f2||f1,f1),
+                y2  = (f1,f2)=> 2*ly(f2||f1)-y1(f2||f1,f1);
+
+            this.value = function(){
+
+                let angle = direction.angle();
+                if(cache[angle])return cache[angle];
+
+                return cache[angle] = {
+                    ly  : ly(fov),
+                    lx  : lx(fov),
+                    x1  : x1(fov),
+                    y1  : y1(fov),
+                    x2  : x2(fov),
+                    y2  : y2(fov)
+                };
+            }
+
+            this.rays = function(){
+                let angle = direction.angle();
+                if(raysCache[angle])return raysCache[angle];
+                
+                let unit = (fov/resolution);
+                let cords = this.value();
+                var ret = [];
+                for(let x = -resolution;x<=resolution;x++){
+                    ret.push({
+                        x1: x1(unit*x, fov),
+                        y1: y1(unit*x, fov),
+                        x2: x1(unit*x, fov*2),
+                        y2: y1(unit*x, fov*2)
+                    });
+                }
+                return raysCache[angle]=ret;          
+            }
+
+            this.left = function(){
+                direction.left();
+                player.direction.left();
+            }
+
+            this.right = function(){
+                direction.right();
+                player.direction.right();
+            }
+
+            this.clearBuffer = function(){
+                cache = [];
+                raysCache = [];
+            }
+        }
+
+        function Player(x,y){
+            this.x = x;
+            this.y = y;
+            this.direction = new Direction(45);
+        }
+
+        Player.prototype.step = function(step){
+            if(!step)step=1;
+
+            console.log(this.direction.angle())
+
+            var dir = this.direction.value();
+            this.x+= dir.x*step;
+            this.y+= dir.y*step;
+        }
+
+
+        function Map(x,y, grid){
+            let center = {
+                x : x/2,
+                y : y/2
+            }
+        }
+
+
+var svg = document.querySelector('svg'),
+    viewHeight = 480,
+    viewWidth = 640,
+    grid = 12,
+    centerX = 320, 
+    centerY=240,
+    player = new Player(centerX, centerY),
+    camera = new Camera(player, 40, 10);
+
+
+// for(let row = grid;row < viewHeight;row+=grid)
+// {
+//   let line = document.createElementNS(svg.namespaceURI, 'line');
+  
+//   line.setAttribute('x1',0);
+//   line.setAttribute('x2',viewWidth);
+  
+//   line.setAttribute('y1',row);
+//   line.setAttribute('y2',row);
+  
+//   line.setAttribute('stroke-width', '.1')
+//   line.setAttribute('stroke', 'black')
+  
+  
+//   svg.appendChild(line);
+// }
+
+// for(let column = grid;column < viewWidth;column+=grid)
+// {
+//   let line = document.createElementNS(svg.namespaceURI, 'line');
+  
+//   line.setAttribute('x1',column);
+//   line.setAttribute('x2',column);
+  
+//   line.setAttribute('y1',0);
+//   line.setAttribute('y2',viewWidth);
+  
+//   line.setAttribute('stroke-width', '.1')
+//   line.setAttribute('stroke', 'black')
+  
+  
+//   svg.appendChild(line);
+// }
+
+
+let circle = document.createElementNS(svg.namespaceURI, 'circle');
+  circle.setAttribute('cx',player.x);
+  circle.setAttribute('cy',player.y);
+  circle.setAttribute('r',5);
+
+svg.appendChild(circle);
+
+let directionLine = document.createElementNS(svg.namespaceURI, 'line');
+    directionLine.setAttribute('x1', player.x);
+    directionLine.setAttribute('y1', player.y);
+    directionLine.setAttribute('stroke-width', '1');
+    directionLine.setAttribute('stroke', 'black'); 
+ //svg.appendChild(directionLine);
+
+let CameraLine = document.createElementNS(svg.namespaceURI, 'line');
+    CameraLine.setAttribute('stroke-width', '1');
+    CameraLine.setAttribute('stroke', 'black');  
+svg.appendChild(CameraLine);
+
+
+window.addEventListener('keydown', function(ev){
+
+
+    switch (event.key) {
+    case "ArrowDown":
+        player.step(1);
+        camera.clearBuffer();
+    break;
+    case "ArrowUp":
+        player.step(-1);
+        camera.clearBuffer();
+      break;
+    case "ArrowLeft":
+       camera.left();
+     break;
+    case "ArrowRight":
+        camera.right();
+      break;
+    }
+
+    ev.preventDefault();
+});
+
+
+
+
+
+    var map = [];
+    for(var y = Math.round(viewHeight / grid);y>=0;y--)
+    {
+        if(!map[y])map[y]=[];
+        for(var x = Math.round(viewWidth / grid);x>=0;x--){
+            if(!map[y][x])map[y][x]=[];
+            map[y][x].push({
+                x1:x,
+                y1:y,
+                x2:x*grid,
+                y2:y*grid
+            });
+        }
+    }
+
+    console.log(map)
+
+svg.addEventListener('mousemove', function(ev){
+
+
+});
+
+
+var rays = [];
+for(var x = 0;x<camera.rays().length;x++){
+let directionLine = document.createElementNS(svg.namespaceURI, 'line');
+    directionLine.setAttribute('stroke-width', '1');
+    directionLine.setAttribute('stroke', 'black'); 
+    rays.push(directionLine);
+    svg.appendChild(directionLine);
+}
+
+
+
++function draw(){  
+  
+circle.setAttribute('cx',player.x);
+circle.setAttribute('cy',player.y);
+
+
+directionLine.setAttribute('x1', player.x);
+directionLine.setAttribute('y1', player.y);
+
+
+
+
+
+// directionLine.setAttribute('x2', camera.value().lx); 
+// directionLine.setAttribute('y2', camera.value().ly);
+
+
+CameraLine.setAttribute('x2', camera.value().x2); 
+CameraLine.setAttribute('y2', camera.value().y2);
+CameraLine.setAttribute('x1', camera.value().x1);
+CameraLine.setAttribute('y1', camera.value().y1);
+
+
+camera.rays().forEach( (ray, idx)=>{
+
+rays[idx].setAttribute('x2', ray.x2); 
+rays[idx].setAttribute('y2', ray.y2);
+rays[idx].setAttribute('x1', ray.x1);
+rays[idx].setAttribute('y1', ray.y1);
+
+});
+
+
+
+
+requestAnimationFrame(draw);  
+}();
+
+    </script>
+
+</body>
+
+</html>
